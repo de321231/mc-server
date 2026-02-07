@@ -29,20 +29,20 @@ button { font-weight:bold; transition:0.2s; }
 </div>
 
 <script>
-const CONFIG = { PASSWORD:'7777' };
+const CONFIG = { PASSWORD:'7777', PROXY_URL:'https://DEIN_VERCEL_PROXY_URL/power' };
 
-function checkLogin() {
+function checkLogin(){
   if(document.getElementById('password').value===CONFIG.PASSWORD){
     document.getElementById('login-area').style.display='none';
     document.getElementById('control-area').style.display='block';
-  } else alert('Falsch!');
+  }else alert('Falsch!');
 }
 
 async function sendPower(action){
   const msg=document.getElementById('status-msg');
   msg.innerText='Verbindung wird aufgebaut...';
   try{
-    const res=await fetch('http://localhost:3000/power',{
+    const res=await fetch(CONFIG.PROXY_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action})
