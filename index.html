@@ -1,36 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MC Control Center</title>
+<style>
+body { background:#121212; color:#e0e0e0; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.container { background:#1e1e1e; padding:25px; border-radius:15px; text-align:center; width:300px; border:1px solid #333; }
+h2 { color:#4caf50; margin-bottom:20px; }
+input { width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #444; background:#252525; color:white; box-sizing:border-box; }
+.grid { display:grid; gap:10px; }
+button { padding:15px; border:none; border-radius:8px; color:white; font-weight:bold; cursor:pointer; transition:0.2s; }
+.btn-start { background:#2e7d32; }
+.btn-restart { background:#f9a825; color:#000; }
+.btn-stop { background:#c62828; }
+.hidden { display:none; }
+#status-msg { margin-top:20px; font-size:13px; padding:10px; border-radius:5px; background:#000; min-height:30px; }
+</style>
+</head>
+<body>
+
+<div id="login-area" class="container">
+<h2>🔒 MC Login</h2>
+<input type="password" id="password" placeholder="Passwort...">
+<button class="btn-start" style="width:100%" id="login-btn">Einloggen</button>
+</div>
+
+<div id="control-area" class="container hidden">
+<h2>🎮 Konsole</h2>
+<div class="grid">
+<button class="btn-start" id="btn-start">AUFWECKEN</button>
+<button class="btn-restart" id="btn-restart">NEUSTART</button>
+<button class="btn-stop" id="btn-stop">STOPPEN</button>
+</div>
+<div id="status-msg">Bereit.</div>
+</div>
+
 <script>
-const CONFIG = {
-  PASSWORD: '7777',
-  API_URL: '/api/power'
-};
+document.addEventListener('DOMContentLoaded', () => {
+  const CONFIG = { PASSWORD: '7777', API_URL: '/api/power' };
 
-function checkLogin() {
-  if(document.getElementById('password').value === CONFIG.PASSWORD) {
-    document.getElementById('login-area').classList.add('hidden');
-    document.getElementById('control-area').classList.remove('hidden');
-  } else alert('Falsch!');
-}
+  const loginBtn = document.getElementById('login-btn');
+  const passwordInput = document.getElementById('password');
+  const loginArea = document.getElementById('login-area');
+  const controlArea = document.getElementById('control-area');
+  const statusMsg = document.getElementById('status-msg');
 
-async function sendPower(action) {
-  const msg = document.getElementById('status-msg');
-  msg.style.color = '#e0e0e0';
-  msg.innerText = 'Sende Befehl...';
+  loginBtn.addEventListener('click', () => {
+    if(passwordInput.value === CONFIG.PASSWORD) {
+      loginArea.classList.add('hidden');
+      controlArea.classList.remove('hidden');
+    } else alert('Falsch!');
+  });
 
-  try {
-    const res = await fetch(CONFIG.API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action })
-    });
-
-    const data = await res.json();
-    msg.style.color = res.ok ? '#4caf50' : '#f44336';
-    msg.innerText = data.message || data.error;
-
-  } catch(err) {
-    msg.style.color = '#f44336';
-    msg.innerText = 'Fehler beim Senden';
-    console.error(err);
+  async function sendPower(action) {
+    statusMsg.style.color = '#e0e0e0';
+    statusMsg.innerText = 'Sende Befehl...';
+    try {
+      const res = await fetch(CONFIG.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      const data = await res.json();
+      statusMsg.style.color = res.ok ? '#4caf50' : '#f44336';
+      statusMsg.innerText = data.message || data.error;
+    } catch(err) {
+      statusMsg.style.color = '#f44336';
+      statusMsg.innerText = 'Fehler beim Senden';
+      console.error(err);
+    }
   }
-}
+
+  document.getElementById('btn-start').addEventListener('click', () => sendPower('start'));
+  document.getElementById('btn-restart').addEventListener('click', () => sendPower('restart'));
+  document.getElementById('btn-stop').addEventListener('click', () => sendPower('stop'));
+});
 </script>
+
+</body>
+</html>
