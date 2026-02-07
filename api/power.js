@@ -1,29 +1,36 @@
-<script>
-const CONFIG = {
-  PASSWORD: '7777',
-  PROXY_URL: '/api/power' // einfach relativ, gleiche Domain
-};
+export default async function handler(req, res) {
+  // 🔓 CORS Header (optional, aber sicher)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-async function sendPower(action) {
-  const msg = document.getElementById('status-msg');
-  msg.style.color = '#e0e0e0';
-  msg.innerText = 'Sende Befehl...';
+  // Preflight
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Nur POST erlaubt' });
+
+  const { action } = req.body;
+  if (!['start', 'stop', 'restart'].includes(action)) {
+    return res.status(400).json({ error: 'Ungültige Aktion' });
+  }
 
   try {
-    const res = await fetch(CONFIG.PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action })
+    const response = await fetch(
+      'https://panel.tick-hosting.com/api/client/servers/5e45e278/power',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ signal: action })
+      }
+    );
+
+    return res.status(200).json({
+      message: response.ok ? 'Befehl gesendet!' : 'Fehler: ' + response.status
     });
-
-    const data = await res.json();
-    msg.style.color = res.ok ? '#4caf50' : '#f44336';
-    msg.innerText = data.message || data.error;
-
   } catch (err) {
-    msg.style.color = '#f44336';
-    msg.innerText = 'Fehler beim Senden';
-    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 }
-</script>
