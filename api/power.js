@@ -1,40 +1,46 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
 
-  // ✅ CORS (PFLICHT)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // 🔓 CORS HEADERS (DAS FEHLT BEI DIR)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // ✅ Preflight abfangen
-  if (req.method === "OPTIONS") {
+  // 🛑 Preflight-Request abfangen
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Nur POST erlaubt" });
+  const CONFIG = {
+    API_KEY: 'ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',
+    SERVER_ID: '5e45e278'
+  };
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Nur POST erlaubt' });
   }
 
   const { action } = req.body;
-
-  if (!["start", "stop", "restart"].includes(action)) {
-    return res.status(400).json({ error: "Ungültige Aktion" });
+  if (!['start', 'stop', 'restart'].includes(action)) {
+    return res.status(400).json({ error: 'Ungültige Aktion' });
   }
 
   try {
     const response = await fetch(
-      "https://panel.tick-hosting.com/api/client/servers/5e45e278/power",
+      `https://panel.tick-hosting.com/api/client/servers/${CONFIG.SERVER_ID}/power`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Authorization": "Bearer ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ",
-          "Content-Type": "application/json"
+          'Authorization': `Bearer ${CONFIG.API_KEY}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ signal: action })
       }
     );
 
     return res.status(200).json({
-      message: response.ok ? "Befehl gesendet!" : "TickHosting Fehler"
+      message: response.ok ? 'Befehl gesendet!' : 'Fehler: ' + response.status
     });
 
   } catch (err) {
