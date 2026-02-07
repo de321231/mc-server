@@ -10,13 +10,22 @@ export default async function handler(req, res) {
       }
     );
 
+    const text = await response.text();
+
     if (!response.ok) {
-      return res.status(500).json({ error: "TickHosting API error" });
+      return res.status(500).json({
+        error: "TickHosting API error",
+        raw: text
+      });
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
     return res.status(200).json(data);
+
   } catch (err) {
-    return res.status(500).json({ error: "Server error", details: err });
+    return res.status(500).json({
+      error: "Server error",
+      details: err.toString()
+    });
   }
 }
