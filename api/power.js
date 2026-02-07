@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -12,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   const { action } = req.body;
-  if (!["start", "stop", "restart", "kill"].includes(action)) {
+  if (!["start", "stop", "restart"].includes(action)) {
     return res.status(400).json({ error: "Ungültige Aktion" });
   }
 
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Authorization": "ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ",
+          "Authorization": "Bearer ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ",
           "Accept": "application/vnd.pterodactyl.v1+json",
           "Content-Type": "application/json"
         },
@@ -30,18 +29,17 @@ export default async function handler(req, res) {
       }
     );
 
-    // Erfolgsfälle: 204 (No Content) oder auch 500 (bekannter Fall)
-    if (response.status === 204 || response.status === 500) {
-      return res.status(200).json({ message: "Befehl gesendet (API OK)" });
+    if (response.status === 204) {
+      return res.status(200).json({ message: "Befehl erfolgreich gesendet!" });
     }
 
-    // Wenn ein anderer Status kommt, gib Details zurück
-    const text = await response.text().catch(() => null);
-    return res.status(response.status).json({
-      error: "Unerwartete API‑Antwort",
-      detail: text || response.statusText
-    });
+    // API kann auch Fehlerstatus + JSON zurückgeben
+    const text = await response.text().catch(() => "");
+    if (!response.ok) {
+      return res.status(response.status).json({ error: text });
+    }
 
+    return res.status(200).json({ message: "Befehl gesendet!", detail: text });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
