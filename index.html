@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Server Control</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 300px; }
+        h2 { margin-bottom: 20px; color: #00ff00; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-start { background: #28a745; }
+        .btn-restart { background: #ffc107; color: black; }
+        .btn-stop { background: #dc3545; }
+        button:active { transform: scale(0.95); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-area" class="container">
+        <h2>🔒 MC Login</h2>
+        <input type="password" id="password" placeholder="Passwort eingeben...">
+        <button class="btn-start" onclick="checkLogin()">Einloggen</button>
+    </div>
+
+    <div id="control-area" class="container hidden">
+        <h2>🎮 Server Status</h2>
+        <div class="grid">
+            <button class="btn-start" onclick="sendPower('start')">AUFWECKEN</button>
+            <button class="btn-restart" onclick="sendPower('restart')">NEUSTART</button>
+            <button class="btn-stop" onclick="sendPower('stop')">STOPPEN</button>
+        </div>
+        <p id="status-msg" style="margin-top: 15px; font-size: 14px; min-height: 20px;"></p>
+    </div>
+
+    <script>
+        const CONFIG = {
+            PASS: '1111', // <--- ÄNDERN
+            ID: '5e45e278', // <--- ÄNDERN
+            KEY: 'ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',   // <--- ÄNDERN
+            URL: 'https://panel.tick-hosting.com/api/client/servers/'
+        };
+
+        function checkLogin() {
+            const input = document.getElementById('password').value;
+            if(input === CONFIG.PASS) {
+                document.getElementById('login-area').classList.add('hidden');
+                document.getElementById('control-area').classList.remove('hidden');
+            } else {
+                alert('Falsches Passwort!');
+            }
+        }
+
+        function sendPower(action) {
+            const msg = document.getElementById('status-msg');
+            msg.innerText = 'Sende Befehl...';
+            
+            // Wir nutzen einen Proxy, um CORS-Probleme auf GitHub Pages zu vermeiden
+            const proxyUrl = 'https://corsproxy.io/?';
+            const apiUrl = CONFIG.URL + CONFIG.ID + '/power';
+            const fullUrl = proxyUrl + encodeURIComponent(apiUrl);
+
+            fetch(fullUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + CONFIG.KEY,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ signal: action })
+            })
+            .then(response => {
+                if(response.ok) {
+                    msg.style.color = '#00ff00';
+                    msg.innerText = 'Befehl "' + action + '" erfolgreich!';
+                } else {
+                    msg.style.color = '#ff4444';
+                    msg.innerText = 'Fehler! (Code: ' + response.status + ')';
+                }
+            })
+            .catch(err => {
+                msg.style.color = '#ff4444';
+                msg.innerText = 'Netzwerkfehler!';
+                console.error(err);
+            });
+        }
+    </script>
+</body>
+</html>
