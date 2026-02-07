@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://panel.tick-hosting.com/api/client/servers/5e45e278`,
+      `https://panel.tick-hosting.com/api/client/servers/5e45e278/resources`,
       {
         method: "GET",
         headers: {
@@ -24,13 +25,16 @@ export default async function handler(req, res) {
     );
 
     if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: text });
+      const errorText = await response.text().catch(() => null);
+      return res.status(response.status).json({ error: errorText });
     }
 
     const data = await response.json();
-    // status kommt aus attributes.status, z. B. "running" atau "offline"
-    return res.status(200).json({ status: data.attributes.status });
+
+    // In vielen APIs kommt der Status so
+    const status = data.attributes?.current_state || "unbekannt";
+    return res.status(200).json({ status });
+
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

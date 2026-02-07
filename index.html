@@ -40,13 +40,15 @@ const POWER_URL = '/api/power';
 async function updateStatus() {
   const statusDisplay = document.getElementById("statusDisplay");
   try {
-    const res = await fetch(STATUS_URL);
+    const res = await fetch("/api/status");
     const json = await res.json();
     statusDisplay.innerText = "Status: " + (json.status || "unbekannt");
-  } catch {
+  } catch (err) {
     statusDisplay.innerText = "Status: Fehler beim Abruf";
+    console.error(err);
   }
 }
+
 
 // Power‑Befehl senden
 async function sendPower(action) {
