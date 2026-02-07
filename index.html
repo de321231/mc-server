@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>TickHosting Server Status</title>
+  <style>
+    body { font-family: Arial; padding: 40px; }
+    pre { background: #eee; padding: 20px; }
+    button { padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+  <h1>TickHosting Server Status</h1>
+
+  <button onclick="loadStatus()">Status abrufen</button>
+
+  <pre id="output">Noch kein Status geladen…</pre>
+
+  <script>
+    async function loadStatus() {
+      document.getElementById("output").textContent = "Lade...";
+
+      const res = await fetch("/api/status");
+      const json = await res.json();
+
+      document.getElementById("output").textContent =
+        JSON.stringify(json, null, 2);
+    }
+  </script>
+
+</body>
+</html>
