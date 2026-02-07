@@ -5,48 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MC Server Control</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 300px; }
-        h2 { margin-bottom: 20px; color: #00ff00; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; box-sizing: border-box; background: #333; color: white; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        button { width: 100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-start { background: #28a745; }
-        .btn-restart { background: #ffc107; color: black; }
-        .btn-stop { background: #dc3545; }
-        button:active { transform: scale(0.95); }
+        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.8); text-align: center; width: 320px; border: 1px solid #333; }
+        h2 { margin-top: 0; color: #4caf50; font-size: 22px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; box-sizing: border-box; background: #252525; color: white; font-size: 16px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; transition: all 0.2s; text-transform: uppercase; }
+        .btn-start { background: #2e7d32; }
+        .btn-restart { background: #f9a825; color: #000; }
+        .btn-stop { background: #c62828; }
+        button:active { transform: scale(0.96); opacity: 0.8; }
         .hidden { display: none; }
+        #status-msg { margin-top: 20px; font-size: 13px; min-height: 40px; padding: 10px; border-radius: 5px; background: #151515; word-break: break-all; }
     </style>
 </head>
 <body>
 
     <div id="login-area" class="container">
         <h2>🔒 MC Login</h2>
-        <input type="password" id="password" placeholder="Passwort eingeben...">
+        <input type="password" id="password" placeholder="Passwort...">
         <button class="btn-start" onclick="checkLogin()">Einloggen</button>
     </div>
 
     <div id="control-area" class="container hidden">
-        <h2>🎮 Server Status</h2>
+        <h2>🎮 Server Steuerung</h2>
         <div class="grid">
-            <button class="btn-start" onclick="sendPower('start')">AUFWECKEN</button>
-            <button class="btn-restart" onclick="sendPower('restart')">NEUSTART</button>
-            <button class="btn-stop" onclick="sendPower('stop')">STOPPEN</button>
+            <button class="btn-start" onclick="sendPower('start')">Aufwecken</button>
+            <button class="btn-restart" onclick="sendPower('restart')">Neustart</button>
+            <button class="btn-stop" onclick="sendPower('stop')">Stoppen</button>
         </div>
-        <p id="status-msg" style="margin-top: 15px; font-size: 14px; min-height: 20px;"></p>
+        <div id="status-msg">Bereit.</div>
     </div>
 
     <script>
+        // --- HIER DEINE DATEN EINTRAGEN ---
         const CONFIG = {
-            PASS: '1111', // <--- ÄNDERN
-            ID: '5e45e278', // <--- ÄNDERN
-            KEY: 'ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',   // <--- ÄNDERN
-            URL: 'https://panel.tick-hosting.com/api/client/servers/'
+            MY_PASS: '0000', // Dein Passwort für diese Website
+            SERVER_ID: '5e45e278',     // Die 8 Zeichen aus der URL
+            API_KEY: 'ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',       // Der Key aus Account -> API Credentials
+            PANEL_URL: 'https://panel.tick-hosting.com'
         };
 
         function checkLogin() {
             const input = document.getElementById('password').value;
-            if(input === CONFIG.PASS) {
+            if(input === CONFIG.MY_PASS) {
                 document.getElementById('login-area').classList.add('hidden');
                 document.getElementById('control-area').classList.remove('hidden');
             } else {
@@ -54,38 +56,40 @@
             }
         }
 
-        function sendPower(action) {
+        async function sendPower(action) {
             const msg = document.getElementById('status-msg');
-            msg.innerText = 'Sende Befehl...';
-            
-            // Wir nutzen einen Proxy, um CORS-Probleme auf GitHub Pages zu vermeiden
-            const proxyUrl = 'https://corsproxy.io/?';
-            const apiUrl = CONFIG.URL + CONFIG.ID + '/power';
-            const fullUrl = proxyUrl + encodeURIComponent(apiUrl);
+            msg.style.color = "#aaa";
+            msg.innerText = 'Sende "' + action + '" Befehl...';
 
-            fetch(fullUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + CONFIG.KEY,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ signal: action })
-            })
-            .then(response => {
-                if(response.ok) {
-                    msg.style.color = '#00ff00';
-                    msg.innerText = 'Befehl "' + action + '" erfolgreich!';
+            const endpoint = `${CONFIG.PANEL_URL}/api/client/servers/${CONFIG.SERVER_ID}/power`;
+            
+            // Wir nutzen corsproxy.io um die Blockade zu umgehen
+            const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(endpoint)}`;
+
+            try {
+                const response = await fetch(proxiedUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ signal: action })
+                });
+
+                if (response.status === 204 || response.status === 200) {
+                    msg.style.color = "#4caf50";
+                    msg.innerText = `Erfolg: Server wird ${action === 'start' ? 'hochgefahren' : action + 'et'}.`;
                 } else {
-                    msg.style.color = '#ff4444';
-                    msg.innerText = 'Fehler! (Code: ' + response.status + ')';
+                    const errorText = await response.text();
+                    msg.style.color = "#f44336";
+                    msg.innerText = `Fehler ${response.status}: ${errorText.includes('auth') ? 'API-Key falsch!' : 'ID falsch oder keine Rechte.'}`;
                 }
-            })
-            .catch(err => {
-                msg.style.color = '#ff4444';
-                msg.innerText = 'Netzwerkfehler!';
+            } catch (err) {
+                msg.style.color = "#f44336";
+                msg.innerText = "Netzwerkfehler! Prüfe Internetverbindung oder Proxy.";
                 console.error(err);
-            });
+            }
         }
     </script>
 </body>
