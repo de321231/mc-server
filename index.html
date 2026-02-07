@@ -1,96 +1,61 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Control Center</title>
-    <style>
-        body { background: #121212; color: #e0e0e0; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #1e1e1e; padding: 25px; border-radius: 15px; text-align: center; width: 300px; border: 1px solid #333; }
-        h2 { color: #4caf50; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; box-sizing: border-box; }
-        .grid { display: grid; gap: 10px; }
-        button { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-start { background: #2e7d32; }
-        .btn-restart { background: #f9a825; color: #000; }
-        .btn-stop { background: #c62828; }
-        .hidden { display: none; }
-        #status-msg { margin-top: 20px; font-size: 13px; padding: 10px; border-radius: 5px; background: #000; min-height: 30px; }
-    </style>
+<meta charset="UTF-8">
+<title>MC Control Center</title>
+<style>
+body { background:#121212; color:#e0e0e0; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.container { background:#1e1e1e; padding:25px; border-radius:15px; text-align:center; width:300px; border:1px solid #333; }
+h2 { color:#4caf50; margin-bottom:20px; }
+input, button { width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #444; background:#252525; color:white; box-sizing:border-box; cursor:pointer; }
+button { font-weight:bold; transition:0.2s; }
+#status-msg { margin-top:20px; font-size:13px; padding:10px; border-radius:5px; background:#000; min-height:30px; }
+</style>
 </head>
 <body>
 
-    <div id="login-area" class="container">
-        <h2>🔒 MC Login</h2>
-        <input type="password" id="password" placeholder="Passwort...">
-        <button class="btn-start" style="width:100%" onclick="checkLogin()">Einloggen</button>
-    </div>
+<div id="login-area" class="container">
+<h2>🔒 MC Login</h2>
+<input type="password" id="password" placeholder="Passwort...">
+<button onclick="checkLogin()">Einloggen</button>
+</div>
 
-    <div id="control-area" class="container hidden">
-        <h2>🎮 Konsole</h2>
-        <div class="grid">
-            <button class="btn-start" onclick="sendPower('start')">AUFWECKEN</button>
-            <button class="btn-restart" onclick="sendPower('restart')">NEUSTART</button>
-            <button class="btn-stop" onclick="sendPower('stop')">STOPPEN</button>
-        </div>
-        <div id="status-msg">Bereit.</div>
-    </div>
+<div id="control-area" class="container" style="display:none;">
+<h2>🎮 Konsole</h2>
+<button onclick="sendPower('start')">AUFWECKEN</button>
+<button onclick="sendPower('restart')">NEUSTART</button>
+<button onclick="sendPower('stop')">STOPPEN</button>
+<div id="status-msg">Bereit.</div>
+</div>
 
-    <script>
-        // --- DEINE DATEN ---
-        const CONFIG = {
-            MY_PASS: '7777', 
-            SERVER_ID: '5e45e278', 
-            API_KEY: 'ptlc_dNKgIvJ0cv5rRE9JJZDCYbW3oYefWSepqCuznW2HzPQ',
-            BASE_URL: 'https://panel.tick-hosting.com/api/client/servers'
-        };
+<script>
+const CONFIG = { PASSWORD:'7777' };
 
-        function checkLogin() {
-            if(document.getElementById('password').value === CONFIG.MY_PASS) {
-                document.getElementById('login-area').classList.add('hidden');
-                document.getElementById('control-area').classList.remove('hidden');
-            } else { alert('Falsch!'); }
-        }
+function checkLogin() {
+  if(document.getElementById('password').value===CONFIG.PASSWORD){
+    document.getElementById('login-area').style.display='none';
+    document.getElementById('control-area').style.display='block';
+  } else alert('Falsch!');
+}
 
-        async function sendPower(action) {
-            const msg = document.getElementById('status-msg');
-            msg.innerText = 'Verbindung wird aufgebaut...';
-            
-            const targetUrl = `${CONFIG.BASE_URL}/${CONFIG.SERVER_ID}/power`;
-            
-            // Neuer Proxy-Ansatz via AllOrigins
-            // Wir senden eine POST-Anfrage über deren API
-            fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, {
-                method: 'GET', // AllOrigins leitet oft besser über GET mit Parametern weiter, aber Ptero braucht POST.
-                // Daher nutzen wir hier einen direkteren Weg ohne AllOrigins-Wrapper, falls möglich, 
-                // aber mit korrekten Header-Einstellungen:
-            });
+async function sendPower(action){
+  const msg=document.getElementById('status-msg');
+  msg.innerText='Verbindung wird aufgebaut...';
+  try{
+    const res=await fetch('http://localhost:3000/power',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action})
+    });
+    const data=await res.json();
+    msg.style.color=res.ok?'#4caf50':'#f44336';
+    msg.innerText=data.message||data.error;
+  }catch(err){
+    msg.style.color='#f44336';
+    msg.innerText='Fehler: '+err.message;
+  }
+}
+</script>
 
-            // ZWEITER VERSUCH mit speziellem Header-Fix:
-            try {
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${CONFIG.API_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ signal: action })
-                });
-
-                if (response.ok || response.status === 204) {
-                    msg.style.color = "#4caf50";
-                    msg.innerText = "Befehl gesendet!";
-                } else {
-                    const data = await response.json().catch(() => ({}));
-                    msg.style.color = "#f44336";
-                    msg.innerText = "Fehler: " + (data.errors ? data.errors[0].detail : response.statusText);
-                }
-            } catch (err) {
-                msg.style.color = "#f44336";
-                msg.innerText = "Immer noch Netzwerkfehler. Bitte versuche es einmal im Inkognito-Tab (wegen Browser-Cache/Addons).";
-            }
-        }
-    </script>
 </body>
 </html>
