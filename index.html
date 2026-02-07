@@ -1,88 +1,8 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MC Control Center</title>
-
-<style>
-body {
-  background:#121212;
-  color:#e0e0e0;
-  font-family:sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  margin:0;
-}
-.container {
-  background:#1e1e1e;
-  padding:25px;
-  border-radius:15px;
-  text-align:center;
-  width:300px;
-  border:1px solid #333;
-}
-h2 {
-  color:#4caf50;
-  margin-bottom:20px;
-}
-input, button {
-  width:100%;
-  padding:12px;
-  margin-bottom:15px;
-  border-radius:8px;
-  border:1px solid #444;
-  background:#252525;
-  color:white;
-  box-sizing:border-box;
-}
-button {
-  font-weight:bold;
-  cursor:pointer;
-}
-#status-msg {
-  margin-top:10px;
-  font-size:13px;
-  padding:10px;
-  border-radius:5px;
-  background:#000;
-  min-height:30px;
-}
-</style>
-</head>
-
-<body>
-
-<div id="login-area" class="container">
-  <h2>🔒 MC Login</h2>
-  <input type="password" id="password" placeholder="Passwort">
-  <button onclick="checkLogin()">Einloggen</button>
-</div>
-
-<div id="control-area" class="container" style="display:none;">
-  <h2>🎮 Konsole</h2>
-  <button onclick="sendPower('start')">AUFWECKEN</button>
-  <button onclick="sendPower('restart')">NEUSTART</button>
-  <button onclick="sendPower('stop')">STOPPEN</button>
-  <div id="status-msg">Bereit.</div>
-</div>
-
 <script>
 const CONFIG = {
   PASSWORD: '7777',
-  PROXY_URL: 'https://mccontrol-bu8apx08q-elenbergerdavid6-gmailcoms-projects.vercel.app/api/power'
+  PROXY_URL: '/api/power' // einfach relativ, gleiche Domain
 };
-
-function checkLogin() {
-  if (document.getElementById('password').value === CONFIG.PASSWORD) {
-    document.getElementById('login-area').style.display = 'none';
-    document.getElementById('control-area').style.display = 'block';
-  } else {
-    alert('Falsches Passwort');
-  }
-}
 
 async function sendPower(action) {
   const msg = document.getElementById('status-msg');
@@ -92,11 +12,8 @@ async function sendPower(action) {
   try {
     const res = await fetch(CONFIG.PROXY_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action }),
-      mode: 'cors'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
     });
 
     const data = await res.json();
@@ -105,11 +22,8 @@ async function sendPower(action) {
 
   } catch (err) {
     msg.style.color = '#f44336';
-    msg.innerText = 'Failed to fetch';
+    msg.innerText = 'Fehler beim Senden';
     console.error(err);
   }
 }
 </script>
-
-</body>
-</html>
